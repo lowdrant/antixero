@@ -7,6 +7,7 @@ from socket import AF_INET, SOCK_STREAM
 from socket import error as sock_error
 from socket import socket
 from threading import Thread
+from sys import stdout
 
 __all__ = ['readcfg', 'MyDaemon']
 
@@ -43,13 +44,15 @@ class AbstractPyDaemon():
         conf = readcfg(self.fnconf)
 
         # Logger Setup
-        self.loglevel = eval(conf[section]['loglevel'])
+        self.loglevel = eval(conf[self.section]['loglevel'])
         self._configlogger()
 
         # Socket Setup
-        self.host = conf[section]['host']
-        self.port = int(conf[section]['port'])
+        self.host = conf[self.section]['host']
+        self.port = int(conf[self.section]['port'])
         self.sock = socket(AF_INET, SOCK_STREAM)
+
+        return conf
 
     def _configlogger(self):
         """Update `self.logger` with current loglevel param."""
@@ -59,6 +62,7 @@ class AbstractPyDaemon():
         formatter = Formatter('%(levelname)s - %(message)s')
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
+        self.logger.debug(f'logger configured to loglevel {self.loglevel}')
 
     def start(self):
         """Start daemon threads"""
@@ -71,9 +75,11 @@ class AbstractPyDaemon():
             print(e)
             self.logger.error(f'start called but {self.host}:{self.port} already in use')
             return
+        else:
+            self.logger.debug(f'socket bound to {self.host}:{self.port}')
         self.go = True
-        self.mainthread.start()
-        self.sockthread.start()
+        for t in self.threads:
+            t.start()
 
     def stop(self, join=False):
         """Stop mainloop thread by sending stop signal to socket.
@@ -90,10 +96,9 @@ class AbstractPyDaemon():
         if join:
             self.join()
 
-        def join(self):
+    def join(self):
         if self.go:
-            self.logger.error('join called but go is True')
-            return False
+            self.logger.warning('join called but go is True')
         for t in self.threads:
             try:
                 t.join()
@@ -103,6 +108,7 @@ class AbstractPyDaemon():
 
     def _listen(self):
         """Shutoff command listener thread. Controlled by `self.go` attribute."""
+        self.logger.debug('Entering socket listening thread')
         while self.go:
             try:
                 self.sock.listen()
@@ -126,6 +132,7 @@ class AbstractPyDaemon():
     def _main(self):
         """Abstract mainloop method"""
         raise NotImplementedError('User must override _main method')
+
 
 if __name__ == '__main__':
     print('This file contains abstract superclasses')
