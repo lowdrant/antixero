@@ -10,7 +10,7 @@ from socket import timeout as SocketTimeoutException
 from threading import Thread
 from sys import stdout
 
-__all__ = ['readcfg', 'MyDaemon']
+__all__ = ['readcfg', 'AbstractPyDaemon']
 
 def readcfg(fn):
     conf = ConfigParser()
@@ -31,15 +31,13 @@ class AbstractPyDaemon():
             fn = self.DEFAULT_CONFIG_FN
         self.fnconf = fn
         self.section = section
-        self._update_from_config()
+        self.socket_timeout = self.DEFAULT_SOCK_TIMEOUT
+        self._update_variables()
         self._setuplogger()
+        self._setupsocket()
         self.logger.debug(
             f'Using config file {self.fnconf} section {self.section}'
         )
-
-        # socket setup
-        self.sock = socket(AF_INET, SOCK_STREAM)
-        self.sock.settimeout(DEFAULT_SOCK_TIMEOUT)
 
         # Thread Setup
         self.go = False
@@ -50,12 +48,12 @@ class AbstractPyDaemon():
         self.sockthread.daemon = True
         self.threads += [self.mainthread, self.sockthread]
 
-    def _update_from_config(self):
+    def _update_variables(self):
+        """Update config variables from config file"""
         conf = readcfg(self.fnconf)
         self.loglevel = eval(conf[self.section]['loglevel'])
         self.sockhost = conf[self.section]['host']
         self.sockport = int(conf[self.section]['port'])
-        print(self.loglevel)
         return conf
 
     def _setuplogger(self):
@@ -67,6 +65,11 @@ class AbstractPyDaemon():
         handler.setFormatter(formatter)
         self.logger.addHandler(handler)
         self.logger.debug(f'logger configured to loglevel {self.loglevel}')
+
+    def _setupsocket(self):
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.settimeout(self.socket_timeout)
+        self.sock.setblocking(True)
 
     def start(self):
         """Start daemon threads"""
@@ -137,6 +140,9 @@ class AbstractPyDaemon():
     def _main(self):
         """Abstract mainloop method"""
         raise NotImplementedError('User must override _main method')
+
+    def _update_devices(self):
+        raise NotImplementedError('User must override _update_devices method')
 
 
 if __name__ == '__main__':
