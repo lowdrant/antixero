@@ -25,7 +25,7 @@ class AntiXero(AbstractPyDaemon):
        self.configthread = Thread(target=self._check4updates, args=())
        self.configthread.daemon = True
        self.threads.append(self.configthread)
-       print(dir(self))
+       print(dir(self.logger))
 
     def _update_from_config(self):
         """Update params from config file. First called in
@@ -39,6 +39,7 @@ class AntiXero(AbstractPyDaemon):
         self.logger.debug('Entering mainloop thread')
         while self.go:
             self.logger.debug('mainloop')
+            print('ml')
 
     def _check4updates(self):
         self.logger.debug('Entering check4updates thread')
@@ -67,9 +68,11 @@ if __name__ == '__main__':
     if args.run:
         try:
             job.start()
-            job.join()
+            job.join()  # wait here until interrupted
         except (Exception, KeyboardInterrupt) as e:
             job.go = False
             if type(e) != KeyboardInterrupt:
                 job.logger.error(e)  # log error
                 raise e
+        finally:
+            job.join()

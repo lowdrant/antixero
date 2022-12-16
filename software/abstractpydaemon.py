@@ -31,6 +31,9 @@ class AbstractPyDaemon():
         self.section = section
         self._update_from_config()
 
+        self.sock = socket(AF_INET, SOCK_STREAM)
+        self.sock.settimeout(0.1)
+
         # Thread Setup
         self.go = False
         self.threads = []
@@ -50,7 +53,6 @@ class AbstractPyDaemon():
         # Socket Setup
         self.host = conf[self.section]['host']
         self.port = int(conf[self.section]['port'])
-        self.sock = socket(AF_INET, SOCK_STREAM)
 
         return conf
 
