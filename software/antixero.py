@@ -26,13 +26,15 @@ class AntiXero(AbstractPyDaemon):
        self.configthread.daemon = True
        self.threads.append(self.configthread)
 
+       self.sock.settimeout(socket_timeout)
+
     def _update_from_config(self):
         """Update params from config file. First called in super().__init__"""
         # TODO: override the overrides when this is called later?
         conf = super()._update_from_config()
         self.t_cfgcheck = float(conf[self.section]['t_cfgcheck'])
         self.servopin = int(conf[self.section]['servopin'])
-        self.sock.settimeout(float(conf[self.section]['socket_timeout']))
+        self.socket_timeout = float(conf[self.section]['socket_timeout'])
 
     def _main(self):
         self.logger.debug('Entering mainloop thread')

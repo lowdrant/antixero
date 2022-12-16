@@ -39,7 +39,7 @@ class AbstractPyDaemon():
 
         # socket setup
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.sock.settimeout(0.1)  # TODO: parameterize timeout?
+        self.sock.settimeout(DEFAULT_SOCK_TIMEOUT)
 
         # Thread Setup
         self.go = False
@@ -58,9 +58,9 @@ class AbstractPyDaemon():
         print(self.loglevel)
         return conf
 
-    def _setuplogger(self, fn=__file__):
+    def _setuplogger(self):
         """Update `self.logger` with current loglevel param."""
-        self.logger = Logger(fn)
+        self.logger = Logger(__file__)
         handler = StreamHandler(stdout)
         handler.setLevel(self.loglevel)
         formatter = Formatter('%(levelname)s - %(message)s')
