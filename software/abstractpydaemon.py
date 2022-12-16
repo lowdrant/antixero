@@ -4,8 +4,9 @@ from copy import deepcopy
 from logging import (CRITICAL, DEBUG, ERROR, INFO, WARNING, Formatter, Logger,
                      StreamHandler)
 from socket import AF_INET, SOCK_STREAM
-from socket import error as sock_error
+from socket import error as SocketException
 from socket import socket
+from socket import timeout as SocketTimeoutException
 from threading import Thread
 from sys import stdout
 
@@ -22,6 +23,7 @@ def readcfg(fn):
 
 class AbstractPyDaemon():
     DEFAULT_CONFIG_FN = None
+    DEFAULT_SOCK_TIMEOUT = 0.1
 
     def __init__(self, fn=None, section='DEFAULT'):
         # Read Config File
@@ -30,9 +32,14 @@ class AbstractPyDaemon():
         self.fnconf = fn
         self.section = section
         self._update_from_config()
+        self._setuplogger()
+        self.logger.debug(
+            f'Using config file {self.fnconf} section {self.section}'
+        )
 
+        # socket setup
         self.sock = socket(AF_INET, SOCK_STREAM)
-        self.sock.settimeout(0.1)
+        self.sock.settimeout(0.1)  # TODO: parameterize timeout?
 
         # Thread Setup
         self.go = False
@@ -45,20 +52,15 @@ class AbstractPyDaemon():
 
     def _update_from_config(self):
         conf = readcfg(self.fnconf)
-
-        # Logger Setup
         self.loglevel = eval(conf[self.section]['loglevel'])
-        self._configlogger()
-
-        # Socket Setup
-        self.host = conf[self.section]['host']
-        self.port = int(conf[self.section]['port'])
-
+        self.sockhost = conf[self.section]['host']
+        self.sockport = int(conf[self.section]['port'])
+        print(self.loglevel)
         return conf
 
-    def _configlogger(self):
+    def _setuplogger(self, fn=__file__):
         """Update `self.logger` with current loglevel param."""
-        self.logger = Logger(__file__)
+        self.logger = Logger(fn)
         handler = StreamHandler(stdout)
         handler.setLevel(self.loglevel)
         formatter = Formatter('%(levelname)s - %(message)s')
@@ -72,13 +74,13 @@ class AbstractPyDaemon():
             self.logger.error('start called but go already True')
             return
         try:
-            self.sock.bind((self.host, self.port))
+            self.sock.bind((self.sockhost, self.sockport))
         except sock_error as e:
             print(e)
-            self.logger.error(f'start called but {self.host}:{self.port} already in use')
+            self.logger.critical(f'start called but {self.sockhost}:{self.sockport} already in use')
             return
         else:
-            self.logger.debug(f'socket bound to {self.host}:{self.port}')
+            self.logger.debug(f'socket bound to {self.sockhost}:{self.sockport}')
         self.go = True
         for t in self.threads:
             t.start()
@@ -92,7 +94,7 @@ class AbstractPyDaemon():
             Whether or not to join instance's run threads, by default False
         """
         with socket(AF_INET, SOCK_STREAM) as sock:
-            sock.connect( (self.host, self.port) )
+            sock.connect( (self.sockhost, self.sockport) )
             sock.sendall( b'off' )
         assert not self.go
         if join:
@@ -128,7 +130,8 @@ class AbstractPyDaemon():
                     f'socket connection; conn:{conn} addr:{addr} data:{data} go:{self.go}'
                 )
             except Exception as e:
-                self._errlog(e)
+                if type(e) not in (SocketTimeoutException, SocketException):
+                    self.logger.error(e)
         self.logger.debug(f'listen thread exited. go:{self.go}')
 
     def _main(self):

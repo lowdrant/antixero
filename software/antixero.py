@@ -25,21 +25,19 @@ class AntiXero(AbstractPyDaemon):
        self.configthread = Thread(target=self._check4updates, args=())
        self.configthread.daemon = True
        self.threads.append(self.configthread)
-       print(dir(self.logger))
 
     def _update_from_config(self):
-        """Update params from config file. First called in
-            super().__init__"""
+        """Update params from config file. First called in super().__init__"""
         # TODO: override the overrides when this is called later?
         conf = super()._update_from_config()
         self.t_cfgcheck = float(conf[self.section]['t_cfgcheck'])
         self.servopin = int(conf[self.section]['servopin'])
+        self.sock.settimeout(float(conf[self.section]['socket_timeout']))
 
     def _main(self):
         self.logger.debug('Entering mainloop thread')
         while self.go:
             self.logger.debug('mainloop')
-            print('ml')
 
     def _check4updates(self):
         self.logger.debug('Entering check4updates thread')
@@ -63,7 +61,7 @@ if __name__ == '__main__':
     kwargs = {}
     if args.loglevel is not None:
         kwargs.update({'loglevel':args.loglevel})
-    job = AntiXero(fn=args.fnconf, section=args.section)
+    job = AntiXero(fn=args.fnconf, section=args.section, **kwargs)
 
     if args.run:
         try:
