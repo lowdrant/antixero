@@ -122,9 +122,38 @@ bool sdPresent() {
     return state == HIGH;
 }
 
+void clearLCD(LiquidCrystal_I2C * lcd, int row) {
+    lcd->setCursor(0, row);
+    for (int i = 0; i < LCD_COLS; i++) {
+        lcd->print(" ");
+    }
+    lcd->setCursor(0, row);
+}
+
+/*
+ * msg must be LCD_COLS+1 long
+ */
+char *padLCDMsg(char *const msg) {
+    size_t len = strlen(msg);
+    /* right-pad str with spaces to clear trailing chars on display */
+    for (int i = len; i < LCD_COLS; i++) {
+        msg[i] = ' ';
+    }
+    msg[LCD_COLS + 1] = '\0';
+    return msg;
+}
+
+/* write error to serial and 2nd row of LCD */
 void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
+    static char str[LCD_COLS + 1];
+    strncpy(str, msg, LCD_COLS);
+    /* right-pad str with spaces to clear trailing chars on display */
+    for (int i = strlen(msg); i < LCD_COLS; i++) {
+        str[i] = ' ';
+    }
+    str[LCD_COLS] = '\0';
     lcd->setCursor(0, 1);
-    lcd->print(msg);
+    lcd->print(str);
     Serial.println(msg);
 }
 

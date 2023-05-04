@@ -8,12 +8,12 @@
 
 String fn = String(SD_FN_BASE); // +String(SD_FN_SUF);
 float hum, temp_c, temp_f, hi_c, hi_f;
-uint16_t rain = 0;
+unsigned int rain = 0;
 int fnnum = 0;
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COLS);
 
-char lcd_str[LCD_ROWS][LCD_COLS];
+char lcd_str[LCD_ROWS][LCD_COLS + 1];
 
 /* 10-digit (32-bit) timestamp + percent + 4-digit analog read 
  * + safety buffer
@@ -66,6 +66,9 @@ void setup() {
         logFile.println("time (ms),humidity (pct),rain,");
         logFile.close();
     }
+    sdUnplugged = false;
+
+    lcd.clear();
 }
 
 void loop() {
@@ -79,16 +82,10 @@ void loop() {
     rain = analogRead(RAIN_PIN);
 
     /* LCD */
-    snprintf(lcd_str[0], LCD_COLS, "Hum:%d%% Rn:%d", (int)hum, rain);
-//    lcd.clear();
+    snprintf(lcd_str[0], LCD_COLS, "Hum:%d%% Rn:%u", (int)hum, rain);
+    padLCDMsg(lcd_str[0]);
     lcd.setCursor(0, 0);
     lcd.print(lcd_str[0]);
-    lcd.setCursor(0, 1);
-    if (!sdPresent()) {
-        lcd.print("No SD card");
-    } else {
-        lcd.print(fn);
-    }
 
     /* Logging */
     if (!sdPresent()) {
@@ -105,6 +102,7 @@ void loop() {
                 fn = String(SD_FN_BASE) + String(fnnum) + String(SD_FN_SUF);
             }
         }
+        errMsg(&lcd, fn.c_str());
         /* construct log before opening for time */
         snprintf(logstr, logstr_len, "%lu,%d,%d,\n", timestamp, hum, rain);
         /* write logfile */
