@@ -33,29 +33,10 @@ void setup() {
     lcd.init();
     lcd.backlight();
     lcd.clear();
-
     dht.begin();
-
-    /* SD Card Detection */
     pinMode(SD_CHIPDETECT, INPUT_PULLUP);
-    while (!sdPresent()) {
-        errMsg(&lcd, F("No SD card"));
-        delay(200);
-    }
-
-    /* SD Card Reading */
-    while (!SD.begin(SD_CS)) {
-        errMsg(&lcd, F("SD card failure"));
-        delay(200);
-    }
-    lcd.clear();
-    lcd.print(F("card initialized."));
-
-    /* Determine Logfile */
+    SD.begin(SD_CS);
     fn = createDatalog();
-    sdUnplugged = false;
-
-    lcd.clear();
 }
 
 void loop() {
