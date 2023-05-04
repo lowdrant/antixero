@@ -158,7 +158,9 @@ void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
 }
 
 void errMsg(LiquidCrystal_I2C * lcd, const __FlashStringHelper * msg) {
-    errMsg(lcd, (const char *)msg);
+    static char buf[LCD_COLS + 1];
+    strncpy_P(buf, (const char *)msg, LCD_COLS);
+    errMsg(lcd, buf);
 }
 
 String createDatalog() {
