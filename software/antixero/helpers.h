@@ -117,4 +117,15 @@ int getDatalogNum(File dir) {
     return num;
 }
 
-#endif
+bool sdPresent() {
+    int state = digitalRead(SD_CHIPDETECT);
+    return state == HIGH;
+}
+
+void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
+    lcd->clear();
+    lcd->print(msg);
+    Serial.println(msg);
+}
+
+#endif /* ifndef _HELPERS_H */
