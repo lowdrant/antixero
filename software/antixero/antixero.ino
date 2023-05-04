@@ -8,7 +8,7 @@
 
 String fn = String(SD_FN_BASE); // +String(SD_FN_SUF);
 float hum, temp_c, temp_f, hi_c, hi_f;
-bool rain = 0;
+int rain = 0;
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COLS);
 
@@ -37,17 +37,14 @@ void setup() {
     lcd.print("card initialized.");
 
     root = SD.open("/");
-    printDirectory(root, 1);
-    root.close();
-    root = SD.open("/");
     int num = getDatalogNum(root);
     root.close();
-
     fn += String(num) + String(SD_FN_SUF);
     Serial.println(fn);
+    /* write header */
     logFile = SD.open(fn.c_str(), FILE_WRITE);
     if (logFile) {
-        logFile.println("time,humidity,rain,");
+        logFile.println("time (ms),humidity (pct),rain,");
         logFile.flush();
     }
 }
@@ -71,9 +68,6 @@ void loop() {
     lcd.print(lcd_str[1]);
 
     /* Logging */
-    Serial.print("fn=");
-    Serial.println(fn);
-//    File logFile = SD.open(fn, FILE_WRITE);
     if (logFile) {
         logFile.print(timestamp);
         logFile.print(",");
