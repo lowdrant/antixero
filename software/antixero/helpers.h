@@ -105,7 +105,6 @@ int getDatalogNum(File dir) {
                     }
                 }
             }
-            entry.close();
             Serial.print("fn=");
             Serial.print(fn);
             Serial.print(", num=");
@@ -113,6 +112,7 @@ int getDatalogNum(File dir) {
             Serial.print(", curnum=");
             Serial.println(curnum);
         }
+        entry.close();
     }
     return num;
 }
