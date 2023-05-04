@@ -2,6 +2,7 @@
 #define _HELPERS_H
 #include <SD.h>
 #include <string.h>
+#include <ctype.h>
 #include "hardware.h"
 
 void printDirectory(File dir, int numTabs) {
@@ -28,47 +29,89 @@ void printDirectory(File dir, int numTabs) {
     }
 }
 
+/**
+ * get logfile number suffix
+ */
+long get_fn_num(const char *const fn) {
+    /* copy string to avoid overwrite */
+    char fntmp[strlen(fn) + 1];
+    strncpy(fntmp, fn, strlen(fn) + 1);
+
+    /* find digit substring */
+    char delim[2] = { SD_FN_SUF[0], '\0' };
+    char nums[SD_MAX_DIGITS + 1];
+    char *substr = strtok(fntmp, delim);
+    size_t baselen = strlen(SD_FN_BASE);
+    strncpy(nums, substr + baselen, SD_MAX_DIGITS);
+
+    /* substring to number */
+    long num = atol(nums);
+//    Serial.print("delim=");Serial.print(delim);
+//    Serial.print(", fntmp=");Serial.print(fntmp);
+//    Serial.print(", substr=");Serial.print(substr);
+//    Serial.print(", nums=");Serial.print(nums);
+//    Serial.print(", num=");Serial.println(num);
+//    printf("delim=%s, fntmp=%s, substr=%s, nums=%s, num=%d\n",
+//           delim, fntmp, substr, nums, num);
+    return num;
+}
+
 /*
  * Avoid overwriting data files by using SD_FN in hardware.h
  * as a prefix, and then attaching a suffix to 
  */
 int getDatalogNum(File dir) {
-    int num = 0;
+    /* string comparison vars */
     size_t baselen = strlen(SD_FN_BASE);
-    String fnbase = String(SD_FN_BASE);
+    char fnbase[baselen + SD_MAX_DIGITS + 1];
+    char *fnsuf;
+    long num = 0;
+    long curnum = 0;
+
+    /* traverse files */
+    long i;
+    size_t fnlen = 50;
+    char fn[fnlen + 1];
+    dir.rewindDirectory();
     while (true) {
+        /* null check */
         File entry = dir.openNextFile();
         if (!entry) {
             break;
         }
+        Serial.print("entry=");
+        Serial.println(entry.name());
 
-        String nm = String(entry.name());
-        nm.toLowerCase();
-
-        if (strncmp(nm.substring(0, baselen).c_str(), fnbase.c_str(), baselen)
-            == 0) {
-            Serial.println("entered statement");
-            size_t numlen = nm.length() - baselen;
-            if (numlen > 4) { // remove filesuffix
-                numlen -= 4;
+        if (!entry.isDirectory()) {
+            /* entry uppercases everything, so lower */
+            for (i = 0; i < strlen(entry.name()); i++) {
+                if (i > fnlen) {
+                    Serial.println("Max filename exceeded for intermed var");
+                    entry.close();
+                    return -1;
+                }
+                fn[i] = tolower(entry.name()[i]);
             }
-            String curnum_substr = nm.substring(baselen); // , numlen);
-            int curnum = curnum_substr.toInt();
-            Serial.print("nm=");
-            Serial.print(nm);
-            Serial.print("  curnum_substr=");
-            Serial.print(curnum_substr);
-            Serial.print(" curnum=");
+            fn[i] = '\0';
+
+            /* see if correct filetype */
+            fnsuf = strstr(fn, SD_FN_SUF);
+            if (fnsuf != NULL) {
+                /* check if correct basename */
+                if (strncmp(SD_FN_BASE, fn, baselen) == 0) {
+                    curnum = get_fn_num(fn);
+                    if (curnum >= num) {
+                        num = curnum + 1;
+                    }
+                }
+            }
+            entry.close();
+            Serial.print("fn=");
+            Serial.print(fn);
+            Serial.print(", num=");
+            Serial.print(num);
+            Serial.print(", curnum=");
             Serial.println(curnum);
-            Serial.print("baselen=");
-            Serial.print(baselen);
-            Serial.print(" numlen=");
-            Serial.println(numlen);
-            if (curnum >= num) {
-                Serial.println("curnum>=num");
-                num = curnum + 1;
-                Serial.println(num);
-            }
         }
     }
     return num;

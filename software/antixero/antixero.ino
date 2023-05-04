@@ -37,16 +37,18 @@ void setup() {
     lcd.print("card initialized.");
 
     root = SD.open("/");
-//  printDirectory(root,0);
+    printDirectory(root, 1);
+    root.close();
+    root = SD.open("/");
     int num = getDatalogNum(root);
     root.close();
 
     fn += String(num) + String(SD_FN_SUF);
     Serial.println(fn);
-    logFile = SD.open(fn, FILE_WRITE);
+    logFile = SD.open(fn.c_str(), FILE_WRITE);
     if (logFile) {
         logFile.println("time,humidity,rain,");
-        logFile.close();
+        logFile.flush();
     }
 }
 
@@ -69,9 +71,9 @@ void loop() {
     lcd.print(lcd_str[1]);
 
     /* Logging */
-    String tmpfn = String(SD_FN_BASE) + String(SD_FN_SUF);
+    Serial.print("fn=");
     Serial.println(fn);
-    logFile = SD.open(fn, FILE_WRITE);
+//    File logFile = SD.open(fn, FILE_WRITE);
     if (logFile) {
         logFile.print(timestamp);
         logFile.print(",");
@@ -79,7 +81,7 @@ void loop() {
         logFile.print(",");
         logFile.print(rain);
         logFile.println(",");
-        logFile.close();
+        logFile.flush();
     } else {
         lcd.clear();
         lcd.print("logfile error");
