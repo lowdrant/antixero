@@ -76,7 +76,7 @@ void loop() {
 
     /* Logging */
     /* construct log before opening for time */
-    snprintf(logstr, logstr_len, "%lu,%d,%d,\n", timestamp, hum, rain);
+    snprintf(logstr, logstr_len, "%lu,%d,%u,\n", timestamp, (int)hum, rain);
     Serial.print(logstr);
     if (!sdPresent()) {
         errMsg(&lcd, F("No SD card"));
