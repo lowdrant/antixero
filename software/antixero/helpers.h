@@ -157,6 +157,10 @@ void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
     Serial.println(msg);
 }
 
+void errMsg(LiquidCrystal_I2C * lcd, const __FlashStringHelper * msg) {
+    errMsg(lcd, (const char *)msg);
+}
+
 String createDatalog() {
     File root = SD.open("/");
     int fnnum = getDatalogNum(root);

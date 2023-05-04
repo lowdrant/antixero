@@ -39,17 +39,17 @@ void setup() {
     /* SD Card Detection */
     pinMode(SD_CHIPDETECT, INPUT_PULLUP);
     while (!sdPresent()) {
-        errMsg(&lcd, "No SD card");
+        errMsg(&lcd, F("No SD card"));
         delay(200);
     }
 
     /* SD Card Reading */
     while (!SD.begin(SD_CS)) {
-        errMsg(&lcd, "SD card failure");
+        errMsg(&lcd, F("SD card failure"));
         delay(200);
     }
     lcd.clear();
-    lcd.print("card initialized.");
+    lcd.print(F("card initialized."));
 
     /* Determine Logfile */
     fn = createDatalog();
@@ -79,13 +79,13 @@ void loop() {
     snprintf(logstr, logstr_len, "%lu,%d,%d,\n", timestamp, hum, rain);
     Serial.print(logstr);
     if (!sdPresent()) {
-        errMsg(&lcd, "No SD card");
+        errMsg(&lcd, F("No SD card"));
         sdUnplugged = true;
     } else {
         /* if card was unplugged, re-open & increment logfile */
         if (sdUnplugged) {
             if (!SD.begin(SD_CS)) {
-                errMsg(&lcd, "SD card error");
+                errMsg(&lcd, F("SD card error"));
             } else {
                 sdUnplugged = false;
                 fn = createDatalog();
@@ -94,7 +94,7 @@ void loop() {
         /* write logfile */
         logFile = SD.open(fn, FILE_WRITE);
         if (!logFile) {
-            errMsg(&lcd, "logfile error");
+            errMsg(&lcd, F("logfile error"));
         } else {
             logFile.print(logstr);
             logFile.close();
