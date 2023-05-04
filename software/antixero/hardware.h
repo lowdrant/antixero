@@ -8,6 +8,7 @@
 
 #define BAUD (115200)
 #define RAIN_PIN (A0)
+#define LOG_T_MS ((unsigned long) 1000)
 
 /* DHT pinout + type*/
 #define DHT_PIN ((uint8_t) 8)

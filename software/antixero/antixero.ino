@@ -102,5 +102,5 @@ void loop() {
         }
     }
 
-    delay(1000);
+    delay(LOG_T_MS);
 }
