@@ -8,7 +8,8 @@
 
 String fn = String(SD_FN_BASE); // +String(SD_FN_SUF);
 float hum, temp_c, temp_f, hi_c, hi_f;
-int rain = 0;
+uint16_t rain = 0;
+int fnnum = 0;
 DHT dht(DHT_PIN, DHT_TYPE);
 LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COLS);
 
@@ -31,6 +32,7 @@ void setup() {
     Serial.begin(BAUD);
     lcd.init();
     lcd.backlight();
+    lcd.clear();
 
     dht.begin();
 
@@ -53,9 +55,11 @@ void setup() {
     root = SD.open("/");
     printDirectory(root, 0);
     root.rewindDirectory();
-    int num = getDatalogNum(root);
+    fnnum = getDatalogNum(root);
     root.close();
-    fn += String(num) + String(SD_FN_SUF);
+
+    /* Create Logfile */
+    fn += String(fnnum) + String(SD_FN_SUF);
     Serial.println(fn);
     logFile = SD.open(fn, FILE_WRITE);
     if (logFile) {
@@ -75,25 +79,30 @@ void loop() {
     rain = analogRead(RAIN_PIN);
 
     /* LCD */
-    snprintf(lcd_str[0], LCD_COLS, "Hum:%d%% Rain:%d", (int)hum, rain);
-    snprintf(lcd_str[1], LCD_COLS, "Time:%lums", timestamp);
-    lcd.clear();
+    snprintf(lcd_str[0], LCD_COLS, "Hum:%d%% Rn:%d", (int)hum, rain);
+//    lcd.clear();
+    lcd.setCursor(0, 0);
     lcd.print(lcd_str[0]);
     lcd.setCursor(0, 1);
-    lcd.print(lcd_str[1]);
+    if (!sdPresent()) {
+        lcd.print("No SD card");
+    } else {
+        lcd.print(fn);
+    }
 
     /* Logging */
-
     if (!sdPresent()) {
         errMsg(&lcd, "No SD card");
         sdUnplugged = true;
     } else {
-        /* if card was unplugged, re-open */
+        /* if card was unplugged, re-open & increment logfile */
         if (sdUnplugged) {
             if (!SD.begin(SD_CS)) {
                 errMsg(&lcd, "SD card error");
             } else {
                 sdUnplugged = false;
+                fnnum += 1;
+                fn = String(SD_FN_BASE) + String(fnnum) + String(SD_FN_SUF);
             }
         }
         /* construct log before opening for time */
@@ -105,6 +114,8 @@ void loop() {
         } else {
             logFile.print(logstr);
             logFile.close();
+            Serial.print("fn=");
+            Serial.println(fn);
             Serial.print(logstr);
         }
     }

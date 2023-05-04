@@ -123,7 +123,7 @@ bool sdPresent() {
 }
 
 void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
-    lcd->clear();
+    lcd->setCursor(0, 1);
     lcd->print(msg);
     Serial.println(msg);
 }
