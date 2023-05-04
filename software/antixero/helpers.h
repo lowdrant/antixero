@@ -157,4 +157,19 @@ void errMsg(LiquidCrystal_I2C * lcd, char *msg) {
     Serial.println(msg);
 }
 
+String createDatalog() {
+    File root = SD.open("/");
+    int fnnum = getDatalogNum(root);
+    root.close();
+
+    /* Create Logfile */
+    String fn = String(SD_FN_BASE) + String(fnnum) + String(SD_FN_SUF);
+    File logFile = SD.open(fn, FILE_WRITE);
+    if (logFile) {
+        logFile.println("time (ms),humidity (pct),rain,");
+        logFile.close();
+    }
+    return fn;
+}
+
 #endif /* ifndef _HELPERS_H */

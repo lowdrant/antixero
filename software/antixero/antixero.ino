@@ -52,20 +52,7 @@ void setup() {
     lcd.print("card initialized.");
 
     /* Determine Logfile */
-    root = SD.open("/");
-    printDirectory(root, 0);
-    root.rewindDirectory();
-    fnnum = getDatalogNum(root);
-    root.close();
-
-    /* Create Logfile */
-    fn += String(fnnum) + String(SD_FN_SUF);
-    Serial.println(fn);
-    logFile = SD.open(fn, FILE_WRITE);
-    if (logFile) {
-        logFile.println("time (ms),humidity (pct),rain,");
-        logFile.close();
-    }
+    fn = createDatalog();
     sdUnplugged = false;
 
     lcd.clear();
@@ -88,6 +75,9 @@ void loop() {
     lcd.print(lcd_str[0]);
 
     /* Logging */
+    /* construct log before opening for time */
+    snprintf(logstr, logstr_len, "%lu,%d,%d,\n", timestamp, hum, rain);
+    Serial.print(logstr);
     if (!sdPresent()) {
         errMsg(&lcd, "No SD card");
         sdUnplugged = true;
@@ -98,13 +88,9 @@ void loop() {
                 errMsg(&lcd, "SD card error");
             } else {
                 sdUnplugged = false;
-                fnnum += 1;
-                fn = String(SD_FN_BASE) + String(fnnum) + String(SD_FN_SUF);
+                fn = createDatalog();
             }
         }
-        errMsg(&lcd, fn.c_str());
-        /* construct log before opening for time */
-        snprintf(logstr, logstr_len, "%lu,%d,%d,\n", timestamp, hum, rain);
         /* write logfile */
         logFile = SD.open(fn, FILE_WRITE);
         if (!logFile) {
@@ -112,9 +98,7 @@ void loop() {
         } else {
             logFile.print(logstr);
             logFile.close();
-            Serial.print("fn=");
-            Serial.println(fn);
-            Serial.print(logstr);
+            errMsg(&lcd, fn.c_str());
         }
     }
 
