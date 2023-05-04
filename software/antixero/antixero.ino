@@ -95,6 +95,7 @@ void loop() {
         logFile = SD.open(fn, FILE_WRITE);
         if (!logFile) {
             errMsg(&lcd, F("logfile error"));
+            fn = createDatalog();
         } else {
             logFile.print(logstr);
             logFile.close();
