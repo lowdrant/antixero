@@ -23,7 +23,7 @@
 #define SD_CHIPDETECT ((uint8_t) 7)
 #define SD_CS ((uint8_t) 4)
 #define SD_FN_BASE ("humlog")
-#define SD_FN_SUF (".csv")
+#define SD_FN_SUF ("csv")
 #define SD_MAX_DIGITS ((int) 5)
 
 #endif /* _PINOUT_H */

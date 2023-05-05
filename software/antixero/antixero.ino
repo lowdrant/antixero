@@ -3,7 +3,6 @@
 #include <SPI.h>
 #include <SD.h>
 #include <LiquidCrystal_I2C.h>
-#include <string.h>
 #include "helpers.h"
 
 String fn = String(SD_FN_BASE); // +String(SD_FN_SUF);
@@ -36,7 +35,12 @@ void setup() {
     dht.begin();
     pinMode(SD_CHIPDETECT, INPUT_PULLUP);
     SD.begin(SD_CS);
-    fn = createDatalog();
+    if (!sdPresent()) {
+      sdUnplugged=true;
+    }else {
+      fn = createDatalog();
+      sdUnplugged = false;
+    }
 }
 
 void loop() {

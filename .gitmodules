@@ -1,0 +1,3 @@
+[submodule "software/antixero/safeLogger"]
+	path = software/antixero/safeLogger
+	url = git@github.com:lowdrant/safeLogger.git
