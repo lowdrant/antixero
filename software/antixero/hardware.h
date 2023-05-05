@@ -15,6 +15,7 @@
 #define DHT_TYPE DHT11
 
 /* LCD pinout */
+#define LCD_T_RST_MS ((unsigned long) 10000)
 #define LCD_ADDR (0x27)
 #define LCD_COLS ((uint8_t) 16)
 #define LCD_ROWS ((uint8_t) 2)

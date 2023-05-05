@@ -14,6 +14,8 @@ LiquidCrystal_I2C lcd(LCD_ADDR, LCD_ROWS, LCD_COLS);
 
 char lcd_str[LCD_ROWS][LCD_COLS + 1];
 
+unsigned long lcd_rst_t_last = 0;
+
 /* 10-digit (32-bit) timestamp + percent + 4-digit analog read 
  * + safety buffer
  */
@@ -36,10 +38,10 @@ void setup() {
     pinMode(SD_CHIPDETECT, INPUT_PULLUP);
     SD.begin(SD_CS);
     if (!sdPresent()) {
-      sdUnplugged=true;
-    }else {
-      fn = createDatalog();
-      sdUnplugged = false;
+        sdUnplugged = true;
+    } else {
+        fn = createDatalog();
+        sdUnplugged = false;
     }
 }
 
@@ -89,4 +91,10 @@ void loop() {
     }
 
     delay(LOG_T_MS);
+
+    if (timestamp - lcd_rst_t_last > LCD_T_RST_MS) {
+        lcd.init();
+        lcd.clear();
+        lcd_rst_t_last = timestamp;
+    }
 }
